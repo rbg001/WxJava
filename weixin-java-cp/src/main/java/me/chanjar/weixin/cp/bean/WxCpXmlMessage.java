@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.util.XmlUtils;
+import me.chanjar.weixin.common.util.xml.IntegerArrayConverter;
+import me.chanjar.weixin.common.util.xml.LongArrayConverter;
 import me.chanjar.weixin.common.util.xml.XStreamCDataConverter;
 import me.chanjar.weixin.cp.config.WxCpConfigStorage;
 import me.chanjar.weixin.cp.util.crypto.WxCpCryptUtil;
@@ -162,7 +164,7 @@ public class WxCpXmlMessage implements Serializable {
 
   /**
    * 通讯录变更事件.
-   * 请参考常量 me.chanjar.weixin.cp.WxCpConsts.ContactChangeType
+   * 请参考常量 me.chanjar.weixin.cp.constant.WxCpConsts.ContactChangeType
    */
   @XStreamAlias("ChangeType")
   @XStreamConverter(value = XStreamCDataConverter.class)
@@ -175,6 +177,26 @@ public class WxCpXmlMessage implements Serializable {
   @XStreamConverter(value = XStreamCDataConverter.class)
   private String userId;
 
+  /**
+   * 变更信息的外部联系人的userid，注意不是企业成员的帐号.
+   */
+  @XStreamAlias("ExternalUserID")
+  @XStreamConverter(value = XStreamCDataConverter.class)
+  private String externalUserId;
+
+  /**
+   * 添加此用户的「联系我」方式配置的state参数，可用于识别添加此用户的渠道.
+   */
+  @XStreamAlias("State")
+  @XStreamConverter(value = XStreamCDataConverter.class)
+  private String state;
+
+  /**
+   * 欢迎语code，可用于发送欢迎语.
+   */
+  @XStreamAlias("WelcomeCode")
+  @XStreamConverter(value = XStreamCDataConverter.class)
+  private String welcomeCode;
   /**
    * 新的UserID，变更时推送（userid由系统生成时可更改一次）.
    */
@@ -191,11 +213,11 @@ public class WxCpXmlMessage implements Serializable {
   private String name;
 
   /**
-   * 成员部门列表.
+   * 成员部门列表，变更时推送，仅返回该应用有查看权限的部门id.
    */
   @XStreamAlias("Department")
-  @XStreamConverter(value = XStreamCDataConverter.class)
-  private String department;
+  @XStreamConverter(value = LongArrayConverter.class)
+  private Long[] departments;
 
   /**
    * 手机号码.
@@ -210,6 +232,13 @@ public class WxCpXmlMessage implements Serializable {
   @XStreamAlias("Position")
   @XStreamConverter(value = XStreamCDataConverter.class)
   private String position;
+
+  /**
+   * 群ID.
+   */
+  @XStreamAlias("ChatId")
+  @XStreamConverter(value = XStreamCDataConverter.class)
+  private String chatId;
 
   /**
    * 性别，1表示男性，2表示女性.
@@ -245,6 +274,13 @@ public class WxCpXmlMessage implements Serializable {
   private Integer isLeader;
 
   /**
+   * 表示所在部门是否为上级，0-否，1-是，顺序与Department字段的部门逐一对应.
+   */
+  @XStreamAlias("IsLeaderInDept")
+  @XStreamConverter(value = IntegerArrayConverter.class)
+  private Integer[] isLeaderInDept;
+
+  /**
    * 座机.
    */
   @XStreamAlias("Telephone")
@@ -268,7 +304,7 @@ public class WxCpXmlMessage implements Serializable {
    * 部门Id.
    */
   @XStreamAlias("Id")
-  private Integer id;
+  private Long id;
 
   /**
    * 父部门id.
@@ -366,6 +402,12 @@ public class WxCpXmlMessage implements Serializable {
 
   @XStreamAlias("SendLocationInfo")
   private SendLocationInfo sendLocationInfo = new SendLocationInfo();
+
+
+  @XStreamAlias("ApprovalInfo")
+  private ApprovalInfo approvalInfo=new ApprovalInfo();
+
+
 
   protected static WxCpXmlMessage fromXml(String xml) {
     //修改微信变态的消息内容格式，方便解析
@@ -483,6 +525,59 @@ public class WxCpXmlMessage implements Serializable {
     @XStreamAlias("Poiname")
     @XStreamConverter(value = XStreamCDataConverter.class)
     private String poiName;
+
+  }
+
+  @XStreamAlias("ApprovalInfo")
+  @Data
+  public static class ApprovalInfo {
+
+    /**
+     * 审批编号
+     */
+    @XStreamAlias("SpNo")
+    private String spNo;
+    /**
+     * 审批申请类型名称（审批模板名称）
+     */
+    @XStreamAlias("SpName")
+    private String spName;
+    /**
+     * 申请单状态：1-审批中；2-已通过；3-已驳回；4-已撤销；6-通过后撤销；7-已删除；10-已支付
+     */
+    @XStreamAlias("SpStatus")
+    private Integer spStatus;
+
+    /**
+     * 审批模板id。
+     */
+    @XStreamAlias("templateId")
+    private String templateId;
+    /**
+     * 审批申请提交时间,Unix时间戳
+     */
+    @XStreamAlias("ApplyTime")
+    private Integer applyTime;
+
+    /**
+     * 申请人信息
+     */
+    @XStreamAlias("Applyer")
+    private Applyer applyer;
+    /**
+     * 审批申请单变化类型
+     */
+    @XStreamAlias("StatuChangeEvent")
+    private Integer statuChangeEvent;
+
+    @XStreamAlias("Applyer")
+    @Data
+    public static class Applyer {
+      @XStreamAlias("Applyer")
+      private String UserId;
+      @XStreamAlias("Party")
+      private String party;
+    }
 
   }
 

@@ -123,6 +123,19 @@ public final class MemberCard implements Serializable {
   private CustomCell1 customCell1;
 
   /**
+   * 自定义会员信息类目，会员卡激活后显示.
+   */
+  @SerializedName("custom_cell2")
+  private CustomCell1 customCell2;
+
+
+  /**
+   * 自定义会员信息类目，会员卡激活后显示.
+   */
+  @SerializedName("custom_cell3")
+  private CustomCell1 customCell3;
+
+  /**
    * 积分规则,JSON结构积分规则.
    */
   @SerializedName("bonus_rule")
@@ -156,6 +169,30 @@ public final class MemberCard implements Serializable {
    */
   @SerializedName("wx_activate_after_submit_url")
   private String wxActivateAfterSubmitUrl;
+
+  /**
+   * 参照https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V卡券内跳转小程序
+   */
+  /**
+   * 积分信息类目对应的小程序 user_name，格式为原始id+@app
+   */
+  @SerializedName("bonus_app_brand_user_name")
+  private String bonusAppBrandUserName;
+  /**
+   *积分入口小程序的页面路径
+   */
+  @SerializedName("bonus_app_brand_pass")
+  private String bonusAppBrandPass;
+  /**
+   *余额信息类目对应的小程序 user_name，格式为原始id+@app
+   */
+  @SerializedName("balance_app_brand_user_name")
+  private String balanceAppBrandUserName;
+  /**
+   *余额入口小程序的页面路径
+   */
+  @SerializedName("balance_app_brand_pass")
+  private String balanceAppBrandPass;
 
   @Override
   public String toString() {
