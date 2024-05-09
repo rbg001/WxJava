@@ -4,6 +4,7 @@ import com.github.binarywang.wxpay.bean.result.BaseWxPayResult;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.w3c.dom.Document;
 
 /**
  * <pre>
@@ -28,4 +29,10 @@ public class GetPublicKeyResult extends BaseWxPayResult {
    */
   @XStreamAlias("pub_key")
   private String pubKey;
+
+  @Override
+  protected void loadXml(Document d) {
+    mchId = readXmlString(d, "mch_id");
+    pubKey = readXmlString(d, "pub_key");
+  }
 }

@@ -1,23 +1,21 @@
 package com.github.binarywang.wxpay.service;
 
-import java.io.File;
-import java.util.Date;
-import java.util.Map;
-
 import com.github.binarywang.wxpay.bean.WxPayApiData;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponInfoQueryRequest;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponInfoQueryResult;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponSendRequest;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponSendResult;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponStockQueryRequest;
-import com.github.binarywang.wxpay.bean.coupon.WxPayCouponStockQueryResult;
+import com.github.binarywang.wxpay.bean.coupon.*;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxScanPayNotifyResult;
 import com.github.binarywang.wxpay.bean.request.*;
 import com.github.binarywang.wxpay.bean.result.*;
 import com.github.binarywang.wxpay.config.WxPayConfig;
+import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
+import org.apache.http.client.methods.HttpPost;
+
+import java.io.File;
+import java.net.URI;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * <pre>
@@ -59,11 +57,80 @@ public interface WxPayService {
   String post(String url, String requestStr, boolean useKey) throws WxPayException;
 
   /**
+   * 发送post请求，得到响应字符串.
+   *
+   * @param url        请求地址
+   * @param requestStr 请求信息
+   * @return 返回请求结果字符串 string
+   * @throws WxPayException the wx pay exception
+   */
+  String postV3(String url, String requestStr) throws WxPayException;
+
+  /**
+   * 发送post请求，得到响应字符串.
+   *
+   * 部分字段会包含敏感信息，所以在提交前需要在请求头中会包含"Wechatpay-Serial"信息
+   *
+   * @param url        请求地址
+   * @param requestStr 请求信息
+   * @return 返回请求结果字符串 string
+   * @throws WxPayException the wx pay exception
+   */
+  String postV3WithWechatpaySerial(String url, String requestStr) throws WxPayException;
+
+  /**
+   * 发送post请求，得到响应字符串.
+   *
+   * @param url        请求地址
+   * @param httpPost 请求信息
+   * @return 返回请求结果字符串 string
+   * @throws WxPayException the wx pay exception
+   */
+  String postV3(String url, HttpPost httpPost) throws WxPayException;
+
+  /**
+   * 发送get V3请求，得到响应字符串.
+   *
+   * @param url 请求地址
+   * @return 返回请求结果字符串 string
+   * @throws WxPayException the wx pay exception
+   */
+  String getV3(URI url) throws WxPayException;
+
+  /**
    * 获取企业付款服务类.
    *
    * @return the ent pay service
    */
   EntPayService getEntPayService();
+
+  /**
+   * 获取红包接口服务类.
+   *
+   * @return .
+   */
+  RedpackService getRedpackService();
+
+  /**
+   * 获取分账服务类.
+   *
+   * @return the ent pay service
+   */
+  ProfitSharingService getProfitSharingService();
+
+
+  /**
+   * 获取支付分服务类.
+   *
+   * @return the ent pay service
+   */
+  PayScoreService getPayScoreService();
+
+  /**
+   * 获取电商收付通服务类
+   * @return
+   */
+  EcommerceService getEcommerceService();
 
   /**
    * 设置企业付款服务类，允许开发者自定义实现类.
@@ -158,6 +225,17 @@ public interface WxPayService {
   <T> T createOrder(WxPayUnifiedOrderRequest request) throws WxPayException;
 
   /**
+   * 调用统一下单接口，并组装生成支付所需参数对象.
+   *
+   * @param specificTradeType 将使用的交易方式，不能为 null
+   * @param request           统一下单请求参数，设定的 tradeType 及配置里的 tradeType 将被忽略，转而使用 specificTradeType
+   * @return 返回 {@link WxPayConstants.TradeType.Specific} 指定的类
+   * @throws WxPayException the wx pay exception
+   * @see WxPayService#createOrder(WxPayUnifiedOrderRequest)
+   */
+  <T> T createOrder(WxPayConstants.TradeType.Specific<T> specificTradeType, WxPayUnifiedOrderRequest request) throws WxPayException;
+
+  /**
    * 统一下单(详见https://pay.weixin.qq.com/wiki/doc/api/app/app.php?chapter=9_1)
    * 在发起微信支付前，需要调用统一下单接口，获取"预支付交易会话标识"
    * 接口地址：https://api.mch.weixin.qq.com/pay/unifiedorder
@@ -209,6 +287,33 @@ public interface WxPayService {
 
   /**
    * <pre>
+   * 申请退款API（支持单品）.
+   * 详见 https://pay.weixin.qq.com/wiki/doc/api/danpin.php?chapter=9_103&index=3
+   *
+   * 应用场景
+   * 当交易发生之后一段时间内，由于买家或者卖家的原因需要退款时，卖家可以通过退款接口将支付款退还给买家，微信支付将在收到退款请求并且验证成功之后，按照退款规则将支付款按原路退到买家帐号上。
+   *
+   * 注意：
+   * 1、交易时间超过一年的订单无法提交退款；
+   * 2、微信支付退款支持单笔交易分多次退款，多次退款需要提交原支付订单的商户订单号和设置不同的退款单号。申请退款总金额不能超过订单金额。 一笔退款失败后重新提交，请不要更换退款单号，请使用原商户退款单号。
+   * 3、请求频率限制：150qps，即每秒钟正常的申请退款请求次数不超过150次
+   *     错误或无效请求频率限制：6qps，即每秒钟异常或错误的退款申请请求不超过6次
+   * 4、每个支付订单的部分退款次数不能超过50次
+   * 5、本接口支持单品优惠订单全额退款和单品优惠订单部分退款，推荐使用本接口，如果使用不支持单品优惠部分退款的历史接口，请看https://pay.weixin.qq.com/wiki/doc/api/jsapi_sl.php?chapter=9_4
+   *
+   * 接口地址
+   * https://api.mch.weixin.qq.com/secapi/pay/refundv2
+   * https://api2.mch.weixin.qq.com/secapi/pay/refundv2(备用域名)见跨城冗灾方案
+   * </pre>
+   *
+   * @param request 请求对象
+   * @return 退款操作结果 wx pay refund result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayRefundResult refundV2(WxPayRefundRequest request) throws WxPayException;
+
+  /**
+   * <pre>
    * 微信支付-查询退款.
    * 应用场景：
    *  提交退款申请后，通过调用该接口查询退款状态。退款有一定延时，用零钱支付的退款20分钟内到账，
@@ -245,6 +350,29 @@ public interface WxPayService {
   WxPayRefundQueryResult refundQuery(WxPayRefundQueryRequest request) throws WxPayException;
 
   /**
+   * <pre>
+   * 微信支付-查询退款API（支持单品）.
+   * 应用场景
+   *    提交退款申请后，通过调用该接口查询退款状态。退款有一定延时，用零钱支付的退款20分钟内到账，银行卡支付的退款3个工作日后重新查询退款状态。
+   * 注意：
+   * 1、本接口支持查询单品优惠相关退款信息，且仅支持按微信退款单号或商户退款单号查询，若继续调用老查询退款接口，
+   *    请见https://pay.weixin.qq.com/wiki/doc/api/jsapi_sl.php?chapter=9_5
+   * 2、请求频率限制：300qps，即每秒钟正常的退款查询请求次数不超过300次
+   * 3、错误或无效请求频率限制：6qps，即每秒钟异常或错误的退款查询请求不超过6次
+   *
+   * 接口地址
+   * https://api.mch.weixin.qq.com/pay/refundqueryv2
+   * https://api2.mch.weixin.qq.com/pay/refundqueryv2(备用域名)见跨城冗灾方案
+   * 详见 https://pay.weixin.qq.com/wiki/doc/api/danpin.php?chapter=9_104&index=4
+   * </pre>
+   *
+   * @param request 微信退款单号
+   * @return 退款信息 wx pay refund query result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayRefundQueryResult refundQueryV2(WxPayRefundQueryRequest request) throws WxPayException;
+
+  /**
    * 解析支付结果通知.
    * 详见https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7
    *
@@ -253,6 +381,17 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   WxPayOrderNotifyResult parseOrderNotifyResult(String xmlData) throws WxPayException;
+
+  /**
+   * 解析支付结果通知.
+   * 详见https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7
+   *
+   * @param xmlData  the xml data
+   * @param signType 签名类型
+   * @return the wx pay order notify result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayOrderNotifyResult parseOrderNotifyResult(String xmlData, String signType) throws WxPayException;
 
   /**
    * 解析退款结果通知
@@ -273,51 +412,6 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   WxScanPayNotifyResult parseScanPayNotifyResult(String xmlData) throws WxPayException;
-
-  /**
-   * 发送微信红包给个人用户.
-   * <pre>
-   * 文档详见:
-   * 发送普通红包 https://pay.weixin.qq.com/wiki/doc/api/tools/cash_coupon.php?chapter=13_4&index=3
-   *  接口地址：https://api.mch.weixin.qq.com/mmpaymkttransfers/sendredpack
-   * 发送裂变红包 https://pay.weixin.qq.com/wiki/doc/api/tools/cash_coupon.php?chapter=13_5&index=4
-   *  接口地址：https://api.mch.weixin.qq.com/mmpaymkttransfers/sendgroupredpack
-   * </pre>
-   *
-   * @param request 请求对象
-   * @return the wx pay send redpack result
-   * @throws WxPayException the wx pay exception
-   */
-  WxPaySendRedpackResult sendRedpack(WxPaySendRedpackRequest request) throws WxPayException;
-
-  /**
-   * <pre>
-   *   查询红包记录.
-   *   用于商户对已发放的红包进行查询红包的具体信息，可支持普通红包和裂变包。
-   *   请求Url：https://api.mch.weixin.qq.com/mmpaymkttransfers/gethbinfo
-   *   是否需要证书：是（证书及使用说明详见商户证书）
-   *   请求方式：POST
-   * </pre>
-   *
-   * @param mchBillNo 商户发放红包的商户订单号，比如10000098201411111234567890
-   * @return the wx pay redpack query result
-   * @throws WxPayException the wx pay exception
-   */
-  WxPayRedpackQueryResult queryRedpack(String mchBillNo) throws WxPayException;
-  /**
-   * <pre>
-   *   查询红包记录.
-   *   用于商户对已发放的红包进行查询红包的具体信息，可支持普通红包和裂变包。
-   *   请求Url：https://api.mch.weixin.qq.com/mmpaymkttransfers/gethbinfo
-   *   是否需要证书：是（证书及使用说明详见商户证书）
-   *   请求方式：POST
-   * </pre>
-   *
-   * @param request 红包查询请求
-   * @return the wx pay redpack query result
-   * @throws WxPayException the wx pay exception
-   */
-  WxPayRedpackQueryResult queryRedpack(WxPayRedpackQueryRequest request) throws WxPayException;
 
   /**
    * <pre>
@@ -502,7 +596,7 @@ public interface WxPayService {
 
   /**
    * <pre>
-   * 提交刷卡支付.
+   * 提交付款码支付.
    * 文档地址：https://pay.weixin.qq.com/wiki/doc/api/micropay.php?chapter=9_10&index=1
    * 应用场景：
    * 收银员使用扫码设备读取微信用户刷卡授权码以后，二维码或条码信息传送至商户收银台，由商户收银台或者商户后台调用该接口发起支付。
@@ -696,4 +790,51 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   String queryComment(WxPayQueryCommentRequest request) throws WxPayException;
+
+  /**
+   * <pre>
+   * 获取微信刷脸支付凭证.
+   * 接口请求链接：https://payapp.weixin.qq.com/face/get_wxpayface_authinfo
+   * 文档地址：https://pay.weixin.qq.com/wiki/doc/api/tools/sp_coupon.php?chapter=12_5
+   * </pre>
+   *
+   * @param request the request
+   * @return the wx pay get face authinfo result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayFaceAuthInfoResult getWxPayFaceAuthInfo(WxPayFaceAuthInfoRequest request) throws WxPayException;
+
+  /**
+   * <pre>
+   * 提交刷脸支付.
+   * 文档地址：https://share.weiyun.com/5dxUgCw
+   * 应用场景：
+   * 用户在商超，便利店，餐饮等场景，在屏幕上通过刷脸完成支付。
+   * 步骤1：用户在自助收银机上点击“刷脸支付”；
+   * 步骤2：发起人脸识别，摄像头自动抓取识别用户人脸，提示用户输入11位手机号码；
+   * 步骤3：商户收银系统提交刷脸支付；
+   * 步骤4：微信支付后台收到支付请求，验证人脸信息，返回支付结果给商户收银系统。
+   * 是否需要证书：不需要。
+   * </pre>
+   *
+   * @param request the request
+   * @return the wx pay facepay result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayFacepayResult facepay(WxPayFacepayRequest request) throws WxPayException;
+
+  /**
+   * 查询汇率
+   * <pre>
+   * 应用场景：商户网站的商品以外币标价时，通过该接口可以实时查询到微信使用的转换汇率。汇率更新时间为北京时间上午10:00，一天更新一次。
+   * 文档地址：https://pay.weixin.qq.com/wiki/doc/api/app/app_jw.php?chapter=9_15&index=12
+   * 接口链接：https://api.mch.weixin.qq.com/pay/queryexchagerate
+   * </pre>
+   *
+   * @param feeType 外币币种
+   * @param date    日期，格式为yyyyMMdd，如2009年12月25日表示为20091225。时区为GMT+8 beijing
+   * @return .
+   * @throws WxPayException .
+   */
+  WxPayQueryExchangeRateResult queryExchangeRate(String feeType, String date) throws WxPayException;
 }

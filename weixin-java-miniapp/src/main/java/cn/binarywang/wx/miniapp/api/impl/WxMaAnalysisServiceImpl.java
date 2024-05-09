@@ -10,9 +10,10 @@ import cn.binarywang.wx.miniapp.bean.analysis.WxMaVisitPage;
 import cn.binarywang.wx.miniapp.bean.analysis.WxMaVisitTrend;
 import cn.binarywang.wx.miniapp.util.json.WxMaGsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import lombok.AllArgsConstructor;
 import me.chanjar.weixin.common.error.WxErrorException;
+import me.chanjar.weixin.common.util.json.GsonParser;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import java.lang.reflect.Type;
@@ -23,13 +24,10 @@ import java.util.List;
  * @author <a href="https://github.com/charmingoh">Charming</a>
  * @since 2018-04-28
  */
+@AllArgsConstructor
 public class WxMaAnalysisServiceImpl implements WxMaAnalysisService {
-  private static final JsonParser JSON_PARSER = new JsonParser();
-  private WxMaService wxMaService;
 
-  public WxMaAnalysisServiceImpl(WxMaService wxMaService) {
-    this.wxMaService = wxMaService;
-  }
+  private WxMaService wxMaService;
 
   @Override
   public List<WxMaSummaryTrend> getDailySummaryTrend(Date beginDate, Date endDate) throws WxErrorException {
@@ -108,7 +106,7 @@ public class WxMaAnalysisServiceImpl implements WxMaAnalysisService {
    */
   private <T> List<T> getAnalysisResultAsList(String url, Date beginDate, Date endDate, Type returnType) throws WxErrorException {
     String responseContent = this.wxMaService.post(url, toJson(beginDate, endDate));
-    JsonObject response = JSON_PARSER.parse(responseContent).getAsJsonObject();
+    JsonObject response = GsonParser.parse(responseContent);
     boolean hasList = response.has("list");
     if (hasList) {
       return WxMaGsonBuilder.create().fromJson(response.getAsJsonArray("list"), returnType);

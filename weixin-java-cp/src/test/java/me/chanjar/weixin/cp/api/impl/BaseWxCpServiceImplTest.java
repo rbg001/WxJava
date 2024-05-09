@@ -8,7 +8,6 @@ import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.*;
 
 /**
  * <pre>
@@ -32,5 +31,10 @@ public class BaseWxCpServiceImplTest {
   @Test
   public void testJsCode2Session() throws WxErrorException {
     assertThat(this.wxService.jsCode2Session("111")).isNotNull();
+  }
+
+  @Test
+  public void testGetProviderToken() throws WxErrorException {
+    assertThat(this.wxService.getProviderToken("111","123")).isNotNull();
   }
 }

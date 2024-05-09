@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static me.chanjar.weixin.cp.constant.WxCpApiPathConsts.TaskCard.*;
+
 /**
  * <pre>
  *  任务卡片管理接口.
@@ -33,7 +35,7 @@ public class WxCpTaskCardServiceImpl implements WxCpTaskCardService {
     data.put("task_id", taskId);
     data.put("clicked_key", clickedKey);
 
-    String url = "https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard";
+    String url = this.mainService.getWxCpConfigStorage().getApiUrl(UPDATE_TASK_CARD);
     this.mainService.post(url, WxGsonBuilder.create().toJson(data));
   }
 }

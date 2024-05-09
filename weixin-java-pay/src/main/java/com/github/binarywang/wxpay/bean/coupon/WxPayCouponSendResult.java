@@ -5,6 +5,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.w3c.dom.Document;
 
 /**
  * <pre>
@@ -136,4 +137,16 @@ public class WxPayCouponSendResult extends BaseWxPayResult {
   @XStreamAlias("ret_msg")
   private String retMsg;
 
+  @Override
+  protected void loadXml(Document d) {
+    deviceInfo = readXmlString(d, "device_info");
+    couponStockId = readXmlString(d, "coupon_stock_id");
+    respCount = readXmlInteger(d, "resp_count");
+    successCount = readXmlInteger(d, "success_count");
+    failedCount = readXmlInteger(d, "failed_count");
+    openid = readXmlString(d, "openid");
+    retCode = readXmlString(d, "ret_code");
+    couponId = readXmlString(d, "coupon_id");
+    retMsg = readXmlString(d, "ret_msg");
+  }
 }

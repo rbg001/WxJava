@@ -6,7 +6,7 @@ import jodd.http.HttpResponse;
 import jodd.http.ProxyInfo;
 import jodd.util.StringPool;
 
-import me.chanjar.weixin.common.WxType;
+import me.chanjar.weixin.common.enums.WxType;
 import me.chanjar.weixin.common.error.WxError;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.common.util.http.RequestHttp;
@@ -26,7 +26,7 @@ public class MediaImgUploadHttpRequestExecutor extends MediaImgUploadRequestExec
   }
 
   @Override
-  public WxMediaImgUploadResult execute(String uri, File data) throws WxErrorException, IOException {
+  public WxMediaImgUploadResult execute(String uri, File data, WxType wxType) throws WxErrorException, IOException {
     if (data == null) {
       throw new WxErrorException(WxError.builder().errorCode(-1).errorMsg("文件对象为空").build());
     }

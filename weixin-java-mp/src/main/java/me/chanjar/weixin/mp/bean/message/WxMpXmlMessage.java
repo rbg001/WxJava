@@ -1,13 +1,5 @@
 package me.chanjar.weixin.mp.bean.message;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-
-import org.apache.commons.io.IOUtils;
-
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 import lombok.Data;
@@ -15,10 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.util.XmlUtils;
 import me.chanjar.weixin.common.util.xml.XStreamCDataConverter;
-import me.chanjar.weixin.mp.api.WxMpConfigStorage;
+import me.chanjar.weixin.mp.config.WxMpConfigStorage;
 import me.chanjar.weixin.mp.util.crypto.WxMpCryptUtil;
 import me.chanjar.weixin.mp.util.json.WxMpGsonBuilder;
 import me.chanjar.weixin.mp.util.xml.XStreamTransformer;
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * <pre>
@@ -529,6 +528,14 @@ public class WxMpXmlMessage implements Serializable {
   private String deviceId;
 
   /**
+   * 微信客户端生成的session id，用于request和response对应，
+   * 因此响应中该字段第三方需要原封不变的带回
+   */
+  @XStreamAlias("SessionID")
+  @XStreamConverter(value = XStreamCDataConverter.class)
+  private String sessionId;
+
+  /**
    * 微信用户账号的OpenID.
    */
   @XStreamAlias("OpenID")
@@ -626,10 +633,54 @@ public class WxMpXmlMessage implements Serializable {
   private String regionCode;
 
   /**
-   * 审核未通过的原因。
+   * 审核未通过的原因.
    */
   @XStreamAlias("ReasonMsg")
   private String reasonMsg;
+
+  /**
+   * 给用户发菜单消息类型的客服消息后，用户所点击的菜单ID.
+   */
+  @XStreamAlias("bizmsgmenuid")
+  private String bizMsgMenuId;
+
+  /*------------------ 电子发票 ------------------*/
+  /**
+   * 授权成功的订单号，与失败订单号两者必显示其一
+   */
+  @XStreamAlias("SuccOrderId")
+  private String succOrderId;
+
+  /**
+   * 授权失败的订单号，与成功订单号两者必显示其一
+   */
+  @XStreamAlias("FailOrderId")
+  private String failOrderId;
+
+  /**
+   * 获取授权页链接的AppId
+   */
+  @XStreamAlias("AuthorizeAppId")
+  private String authorizeAppId;
+
+  /**
+   * 授权来源，web：公众号开票，app：app开票，wxa：小程序开票，wap：h5开票
+   */
+  @XStreamAlias("source")
+  private String source;
+
+  /**
+   * 发票请求流水号，唯一识别发票请求的流水号
+   */
+  @XStreamAlias("fpqqlsh")
+  private String fpqqlsh;
+
+  /**
+   * 纳税人识别码
+   */
+  @XStreamAlias("nsrsbh")
+  private String nsrsbh;
+
 
   public static WxMpXmlMessage fromXml(String xml) {
     //修改微信变态的消息内容格式，方便解析

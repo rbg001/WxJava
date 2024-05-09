@@ -5,6 +5,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.w3c.dom.Document;
 
 /**
  * <pre>
@@ -227,4 +228,23 @@ public class WxPayCouponInfoQueryResult extends BaseWxPayResult {
   @XStreamAlias("is_partial_use")
   private String isPartialUse;
 
+  @Override
+  protected void loadXml(Document d) {
+    deviceInfo = readXmlString(d, "device_info");
+    couponStockId = readXmlString(d, "coupon_stock_id");
+    couponId = readXmlString(d, "coupon_id");
+    couponValue = readXmlInteger(d, "coupon_value");
+    couponMinimum = readXmlInteger(d, "coupon_minimum");
+    couponName = readXmlString(d, "coupon_name");
+    couponState = readXmlString(d, "coupon_state");
+    couponDesc = readXmlString(d, "coupon_desc");
+    couponUseValue = readXmlInteger(d, "coupon_use_value");
+    couponRemainValue = readXmlInteger(d, "coupon_remain_value");
+    beginTime = readXmlString(d, "begin_time");
+    endTime = readXmlString(d, "end_time");
+    sendTime = readXmlString(d, "send_time");
+    consumerMchId = readXmlString(d, "consumer_mch_id");
+    sendSource = readXmlString(d, "send_source");
+    isPartialUse = readXmlString(d, "is_partial_use");
+  }
 }
